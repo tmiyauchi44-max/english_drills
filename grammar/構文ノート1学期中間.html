@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>英文法ドリル</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(26px, 6vw, 42px);
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #f1f5f9;
+    }
+
+    .review-badge {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .question-box {
+      white-space: pre-line;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 16px;
+      font-size: clamp(17px, 4.5vw, 22px);
+      margin-bottom: 14px;
+    }
+
+    .answer-box {
+      display: none;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .answer-label {
+      color: #64748b;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .answer-text {
+      white-space: pre-line;
+      font-size: clamp(22px, 6vw, 30px);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .explanation {
+      color: #334155;
+      font-size: 15px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      width: 100%;
+      background: #0f172a;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .easy {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+
+    .hard {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .reset {
+      display: block;
+      margin: 16px auto 0;
+      background: transparent;
+      color: #334155;
+      padding: 12px 16px;
+    }
+
+    .note {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .finish {
+      text-align: center;
+      display: none;
+    }
+
+    .finish-icon {
+      font-size: 54px;
+    }
+
+    @media (min-width: 700px) {
+      .stats {
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .app {
+        padding: 32px;
+      }
+
+      .card {
+        padding: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>英文法ドリル</h1>
+      <p class="subtitle">20問ごとのセットで練習します。答えを確認してから「簡単」「難しい」を選びます。</p>
+    </header>
+
+    <section id="drillArea">
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">セット内クリア</div>
+          <div class="stat-value" id="masteredCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">復習中</div>
+          <div class="stat-value" id="reviewCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">セット内残り</div>
+          <div class="stat-value" id="remainingCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">セット</div>
+          <div class="stat-value" id="setCount">1/1</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">全問題</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+      </div>
+
+      <main class="card">
+        <div class="top-row">
+          <span class="badge" id="questionId">問題</span>
+          <span class="badge review-badge" id="reviewBadge" style="display:none;">復習問題</span>
+        </div>
+
+        <div class="question-box" id="questionText"></div>
+
+        <button class="primary" id="showAnswerButton">答え</button>
+
+        <div class="answer-box" id="answerBox">
+          <div class="answer-label">答え</div>
+          <div class="answer-text" id="answerText"></div>
+          <div class="explanation" id="explanationText"></div>
+        </div>
+
+        <div class="button-grid">
+          <button class="easy" id="easyButton" disabled>簡単</button>
+          <button class="hard" id="hardButton" disabled>難しい</button>
+        </div>
+
+        <p class="note">
+          「簡単」を押した問題は、そのセット内では再出題されません。<br>
+          「難しい」を押した問題は、同じ20問セット内で数問後にもう一度出題されます。<br>
+          セット内の問題をすべてクリアすると、次の20問セットへ進みます。
+        </p>
+      </main>
+    </section>
+
+    <section class="card finish" id="finishArea">
+      <div class="finish-icon">✅</div>
+      <h2>全問終了！</h2>
+      <p>すべてのセットをクリアしました。</p>
+      <button class="hard" id="restartButton">もう一度練習する</button>
+    </section>
+
+    <button class="reset" id="resetButton">最初からやり直す</button>
+  </div>
+
+  <script>
+    const QUESTIONS_PER_SET = 20;
+
+    const questions = [
+      { id: "4-(1)", question: "ジェーンは和室が好きなようだ。\n(            ) (            ) that Jane likes a Japanese-style room.", answer: "It seems", explanation: "It seems that ～ で『～のようだ』という意味です。" },
+      { id: "4-(2)", question: "私たちはたまたま同じバスに乗り合わせた。\n(            ) (            ) we were on the same bus.", answer: "It happened", explanation: "It happened that ～ で『たまたま～した』という意味です。" },
+      { id: "4-(3)", question: "It seems that she cares about the environment.\n日本語訳を書きなさい。\n→ She seems (            ) (            ) about the environment.", answer: "彼女は環境を気にかけているようだ。 / to care", explanation: "It seems that S V は S seems to V に書き換えられます。" },
+      { id: "4-(4)", question: "It happened that she was out when the fire broke out.\n日本語訳を書きなさい。\n→ She (            ) (            ) (            ) out when the fire broke out.", answer: "火事が起こったとき、彼女はたまたま外出していた。 / happened to be", explanation: "It happened that S V は S happened to V に書き換えられます。" },
+      { id: "4-(5)", question: "私たちは偶然お互い知り合いだった。\n語句: that, knew, we, happened\nIt ______________________________ each other.", answer: "It happened that we knew each other.", explanation: "It happened that ～ で『偶然～だった』を表します。" },
+      { id: "4-(6)", question: "彼女は料理に満足しているようだ。\nIt ______________________________ the food.", answer: "It seems that she is satisfied with the food.", explanation: "be satisfied with ～ で『～に満足している』という意味です。" },
+      { id: "5-(1)", question: "今年の夏は暑くなるそうだ。\n(            ) (            ) (            ) that it will be hot this summer.", answer: "It is said", explanation: "It is said that ～ で『～だと言われている』という意味です。" },
+      { id: "5-(2)", question: "彼は市長に選ばれると言われている。\nThey (            ) (            ) he will be elected mayor.", answer: "say that", explanation: "They say that ～ で『～だと言われている』を表します。" },
+      { id: "5-(3)", question: "It is said that smoking is bad for your health.\n日本語訳を書きなさい。\n→ Smoking is (            ) (            ) (            ) bad for your health.", answer: "喫煙は健康に悪いと言われている。 / said to be", explanation: "It is said that S V は S is said to V に書き換えられます。" },
+      { id: "5-(4)", question: "野球は日本で最も人気のあるスポーツだと言われている。\nIt is ______________________________", answer: "It is said that baseball is the most popular sport in Japan.", explanation: "『～だと言われている』は It is said that ～ で表します。" },
+      { id: "6-(1)", question: "私はそのカメラを使うのは簡単だとわかった。\nI (            ) (            ) easy to use the camera.", answer: "found it", explanation: "find it 形容詞 to do で『～することが…だとわかる』という意味です。" },
+      { id: "6-(2)", question: "Jane thinks it interesting to learn Japanese history.\n日本語訳を書きなさい。", answer: "ジェーンは日本の歴史を学ぶことはおもしろいと思っている。", explanation: "think it 形容詞 to do の it は形式目的語です。" },
+      { id: "6-(3)", question: "We take it granted that we should do our assignments.\n日本語訳を書きなさい。", answer: "私たちは課題をするのは当然だと思っている。", explanation: "take it for granted that ～ が正しい表現で、『～を当然だと思う』という意味です。" },
+      { id: "6-(4)", question: "彼女は良い仕事に就くのは大切だとわかった。\n語句: get, found, it, to, important\nShe ______________________________", answer: "She found it important to get a good job.", explanation: "found it important to ～ で『～することが大切だとわかった』です。" },
+      { id: "6-(5)", question: "その橋は、その街に早く着くことを可能にした。\nThe bridge ______________________________ the town early.", answer: "The bridge enabled us to reach the town early.", explanation: "enable A to do で『Aが～することを可能にする』という意味です。" },
+      { id: "7-(1)", question: "少年はどこへ行ったらよいかわからなかった。\nThe boy didn’t know (            ) (            ) (            ).", answer: "where to go", explanation: "疑問詞 + to do で『～すべきか』を表します。" },
+      { id: "7-(2)", question: "She was at a loss what to do next.\n日本語訳を書きなさい。", answer: "彼女は次に何をすべきかわからなかった。", explanation: "be at a loss で『途方に暮れる、わからない』という意味です。" },
+      { id: "7-(3)", question: "いつこのメールを送ればよいかおしえてくれませんか。\n語句: this mail, to, send, when\nWill you tell me ______________________________", answer: "Will you tell me when to send this mail?", explanation: "when to send ～ で『いつ～を送ればよいか』です。" },
+      { id: "7-(4)", question: "ジェーンはごはんの炊き方を習った。\nJane learned ______________________________", answer: "Jane learned how to cook rice.", explanation: "how to do で『～の仕方』という意味です。" },
+      { id: "8-(1)", question: "ジェーンは日の出を見るために早起きをした。\nJane got up early in (            ) (            ) watch the sunrise.", answer: "order to", explanation: "in order to do で『～するために』という意味です。" },
+      { id: "8-(2)", question: "私たちは時間通りに着くようにタクシーに乗った。\nWe took a taxi so (            ) (            ) arrive on time.", answer: "as to", explanation: "so as to do で『～するために』という意味です。" },
+      { id: "8-(3)", question: "My brother saves money in order to buy a new car.\n日本語訳を書きなさい。\n→ My brother saves money (            ) (            ) he (            ) buy a new car.", answer: "兄は新しい車を買うためにお金を貯めている。 / so that / can", explanation: "in order to do は so that S can do に書き換えられます。" },
+      { id: "8-(4)", question: "彼は英語を勉強するためにもうすぐアメリカ合衆国へ行く。\nHe’ll soon go to the U.S.A. ______________________________", answer: "He’ll soon go to the U.S.A. to study English.", explanation: "目的を表す to 不定詞を使います。" },
+      { id: "9-(1)", question: "その漢字はあまりに難しかったので読めなかった。\nThat Chinese character was (            ) difficult (            ) read.", answer: "too / to", explanation: "too 形容詞 to do で『あまりに…なので～できない』です。" },
+      { id: "9-(2)", question: "林先生は親切にもジェーンを手伝ってあげた。\nMr. Hayashi was kind (            ) (            ) help Jane.", answer: "enough to", explanation: "形容詞 enough to do で『～するほど…』を表します。" },
+      { id: "9-(3)", question: "This box is too heavy for me to lift.\n日本語訳を書きなさい。\n→ This box is (            ) heavy (            ) I (            ) lift it.", answer: "この箱は重すぎて私には持ち上げられない。 / so / that / can’t", explanation: "too ... to ～ は so ... that S can't ～ に書き換えられます。" },
+      { id: "9-(4)", question: "He is clever enough to solve the problem.\n日本語訳を書きなさい。\n→ He is (            ) clever (            ) he can solve the problem.", answer: "彼はその問題を解けるほど賢い。 / so / that", explanation: "形容詞 enough to do は so 形容詞 that S can do に書き換えられます。" },
+      { id: "9-(5)", question: "このカレーライスは辛すぎて私には食べられない。\n語句: eat, me, hot, for, to, too\nThis curry and rice is ______________________________", answer: "This curry and rice is too hot for me to eat.", explanation: "too 形容詞 for A to do で『Aには…すぎて～できない』です。" },
+      { id: "9-(6)", question: "トムは天井に触ることができるほど背が高い。\nTom is ______________________________ the ceiling.", answer: "Tom is tall enough to touch the ceiling.", explanation: "tall enough to do で『～するのに十分背が高い』です。" },
+      { id: "10-(1)", question: "ウェンディは来月フランスに出発することになっている。\nWendy (            ) (            ) leave for France next month.", answer: "is to", explanation: "be to do で『～することになっている』を表します。" },
+      { id: "10-(2)", question: "You are to be honest in everything all the time.\n日本語訳を書きなさい。", answer: "あなたはいつもすべてのことにおいて正直でなければならない。", explanation: "be to do は義務・予定などを表します。ここでは義務の意味です。" },
+      { id: "10-(3)", question: "Not a star was to be seen there last night.\n日本語訳を書きなさい。", answer: "昨夜そこでは星が一つも見えなかった。", explanation: "be to be seen は『見られる』という意味です。否定で『一つも見えなかった』になります。" },
+      { id: "10-(4)", question: "彼女は来月からここで働くことになっている。\nShe is ______________________________ from next month.", answer: "She is to work here from next month.", explanation: "be to do で予定を表します。" },
+      { id: "11-(1)", question: "彼らはよい友だちのようだ。\nThey (            ) (            ) (            ) good friends.", answer: "seem to be", explanation: "S seem to be ～ で『Sは～のようだ』です。" },
+      { id: "11-(2)", question: "He seems to be shy.\n日本語訳を書きなさい。\n→ It (            ) that he (            ) shy.", answer: "彼は内気なようだ。 / seems / is", explanation: "He seems to be shy. は It seems that he is shy. に書き換えられます。" },
+      { id: "11-(3)", question: "He seems to have been shy in his childhood.\n日本語訳を書きなさい。\n→ (            ) (            ) (            ) he (            ) shy in his childhood.", answer: "彼は子どものころ内気だったようだ。 / It seems that / was", explanation: "seems to have been は、that節では過去形 was を使って表せます。" },
+      { id: "11-(4)", question: "生徒たちは彼女の授業を楽しんだようだ。\n語句: enjoy, seem, have, to\nThe students ______________________________ her class.", answer: "The students seem to have enjoyed her class.", explanation: "過去のことを『～したようだ』と言うときは seem to have 過去分詞 を使います。" },
+      { id: "11-(5)", question: "彼はその事件について何も知らないようだ。\nHe ______________________________ nothing about the case.", answer: "He seems to know nothing about the case.", explanation: "seem to do で『～するようだ』を表します。" },
+      { id: "12-(1)", question: "林先生は彼らに一生懸命勉強するように言った。\nMr. Hayashi (            ) them (            ) (            ) hard.", answer: "told / to study", explanation: "tell A to do で『Aに～するように言う』です。" },
+      { id: "12-(2)", question: "私は彼女がピアノを弾くのを見た。\nI (            ) her (            ) the piano.", answer: "saw / play", explanation: "知覚動詞 see + 目的語 + 動詞の原形 の形です。" },
+      { id: "12-(3)", question: "She asked me to wait outside for a moment.\n日本語訳を書きなさい。", answer: "彼女は私に少しの間外で待つように頼んだ。", explanation: "ask A to do で『Aに～するように頼む』です。" },
+      { id: "12-(4)", question: "He let me use his English dictionary yesterday.\n日本語訳を書きなさい。", answer: "彼は昨日、私に彼の英語の辞書を使わせてくれた。", explanation: "let A do で『Aに～させる、～することを許す』です。" },
+      { id: "12-(5)", question: "ジェーンは私たちに英語で日記をつけさせた。\n語句: keep, made, a diary, us\nJane ______________________________ in English.", answer: "Jane made us keep a diary in English.", explanation: "make A do で『Aに～させる』です。" },
+      { id: "12-(6)", question: "私は彼女が上手に日本語を話すのを聞いた。\nI heard ______________________________", answer: "I heard her speak Japanese well.", explanation: "知覚動詞 hear + 目的語 + 動詞の原形 の形です。" }
+    ];
+
+    let questionSets = [];
+    let currentSetIndex = 0;
+    let currentQuestion = null;
+    let waitingQuestions = [];
+    let masteredIds = [];
+    let reviewIds = [];
+    let answerShown = false;
+
+    const drillArea = document.getElementById("drillArea");
+    const finishArea = document.getElementById("finishArea");
+    const masteredCount = document.getElementById("masteredCount");
+    const reviewCount = document.getElementById("reviewCount");
+    const remainingCount = document.getElementById("remainingCount");
+    const setCount = document.getElementById("setCount");
+    const totalCount = document.getElementById("totalCount");
+    const questionId = document.getElementById("questionId");
+    const reviewBadge = document.getElementById("reviewBadge");
+    const questionText = document.getElementById("questionText");
+    const showAnswerButton = document.getElementById("showAnswerButton");
+    const answerBox = document.getElementById("answerBox");
+    const answerText = document.getElementById("answerText");
+    const explanationText = document.getElementById("explanationText");
+    const easyButton = document.getElementById("easyButton");
+    const hardButton = document.getElementById("hardButton");
+    const resetButton = document.getElementById("resetButton");
+    const restartButton = document.getElementById("restartButton");
+
+    function shuffleArray(array) {
+      const copied = array.slice();
+      for (let i = copied.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = copied[i];
+        copied[i] = copied[j];
+        copied[j] = temp;
+      }
+      return copied;
+    }
+
+    function chunkQuestions(list, size) {
+      const chunks = [];
+      for (let i = 0; i < list.length; i += size) {
+        chunks.push(list.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function validateQuestions() {
+      return questions.every(function(q) {
+        return q && typeof q.id === "string" && typeof q.question === "string" && q.question.length > 0 && typeof q.answer === "string" && q.answer.length > 0;
+      });
+    }
+
+    function runTests() {
+      console.assert(validateQuestions(), "すべての問題に id / question / answer が必要です。");
+      console.assert(chunkQuestions(questions, 20).length === Math.ceil(questions.length / 20), "20問ごとにセット化できる必要があります。");
+      console.assert(questions.find(function(q) { return q.id === "6-(3)"; }).question.indexOf("\n") !== -1, "6-(3) は改行を含む文字列として保存されている必要があります。");
+    }
+
+    function startSet(index) {
+      currentSetIndex = index;
+      const selectedSet = shuffleArray(questionSets[currentSetIndex] || []);
+      currentQuestion = selectedSet[0] || null;
+      waitingQuestions = selectedSet.slice(1);
+      masteredIds = [];
+      reviewIds = [];
+      answerShown = false;
+      render();
+    }
+
+    function showFinish() {
+      drillArea.style.display = "none";
+      finishArea.style.display = "block";
+      resetButton.style.display = "none";
+    }
+
+    function goToNextQuestion(nextWaitingQuestions) {
+      if (nextWaitingQuestions.length === 0) {
+        const nextSetIndex = currentSetIndex + 1;
+        if (nextSetIndex >= questionSets.length) {
+          currentQuestion = null;
+          showFinish();
+          return;
+        }
+        startSet(nextSetIndex);
+        return;
+      }
+
+      currentQuestion = nextWaitingQuestions[0];
+      waitingQuestions = nextWaitingQuestions.slice(1);
+      answerShown = false;
+      render();
+    }
+
+    function showAnswer() {
+      answerShown = true;
+      render();
+    }
+
+    function markEasy() {
+      if (!currentQuestion || !answerShown) return;
+      if (masteredIds.indexOf(currentQuestion.id) === -1) {
+        masteredIds.push(currentQuestion.id);
+      }
+      reviewIds = reviewIds.filter(function(id) {
+        return id !== currentQuestion.id;
+      });
+      goToNextQuestion(waitingQuestions);
+    }
+
+    function markHard() {
+      if (!currentQuestion || !answerShown) return;
+      if (reviewIds.indexOf(currentQuestion.id) === -1) {
+        reviewIds.push(currentQuestion.id);
+      }
+      const nextWaitingQuestions = waitingQuestions.slice();
+      const insertPosition = Math.min(3, nextWaitingQuestions.length);
+      nextWaitingQuestions.splice(insertPosition, 0, currentQuestion);
+      goToNextQuestion(nextWaitingQuestions);
+    }
+
+    function resetApp() {
+      drillArea.style.display = "block";
+      finishArea.style.display = "none";
+      resetButton.style.display = "block";
+      questionSets = chunkQuestions(questions, QUESTIONS_PER_SET);
+      startSet(0);
+    }
+
+    function render() {
+      if (!currentQuestion) return;
+
+      masteredCount.textContent = masteredIds.length;
+      reviewCount.textContent = reviewIds.length;
+      remainingCount.textContent = waitingQuestions.length + 1;
+      setCount.textContent = (currentSetIndex + 1) + "/" + questionSets.length;
+      totalCount.textContent = questions.length;
+
+      questionId.textContent = "問題 " + currentQuestion.id;
+      questionText.textContent = currentQuestion.question;
+      answerText.textContent = currentQuestion.answer;
+      explanationText.textContent = currentQuestion.explanation;
+
+      if (reviewIds.indexOf(currentQuestion.id) !== -1) {
+        reviewBadge.style.display = "inline-block";
+      } else {
+        reviewBadge.style.display = "none";
+      }
+
+      if (answerShown) {
+        answerBox.style.display = "block";
+        showAnswerButton.style.display = "none";
+        easyButton.disabled = false;
+        hardButton.disabled = false;
+      } else {
+        answerBox.style.display = "none";
+        showAnswerButton.style.display = "block";
+        easyButton.disabled = true;
+        hardButton.disabled = true;
+      }
+    }
+
+    showAnswerButton.addEventListener("click", showAnswer);
+    easyButton.addEventListener("click", markEasy);
+    hardButton.addEventListener("click", markHard);
+    resetButton.addEventListener("click", resetApp);
+    restartButton.addEventListener("click", resetApp);
+
+    runTests();
+    resetApp();
+  </script>
+</body>
+</html>
