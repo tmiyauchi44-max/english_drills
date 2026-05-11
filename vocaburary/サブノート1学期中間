@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>単語4択テスト</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#f8fafc; color:#0f172a; line-height:1.6; }
+    .app { max-width:900px; margin:0 auto; padding:18px; }
+    header { text-align:center; margin-bottom:18px; }
+    h1 { margin:0 0 6px; font-size:clamp(26px,6vw,42px); }
+    .subtitle { margin:0; color:#64748b; font-size:15px; }
+    .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+    .stat-card { background:#fff; border-radius:18px; padding:12px; text-align:center; box-shadow:0 1px 8px rgba(15,23,42,.08); }
+    .stat-label { color:#64748b; font-size:13px; }
+    .stat-value { font-size:24px; font-weight:800; }
+    .card { background:#fff; border-radius:24px; padding:18px; box-shadow:0 8px 24px rgba(15,23,42,.12); }
+    .question-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:18px; padding:22px 16px; font-size:clamp(28px,8vw,46px); font-weight:900; text-align:center; margin-bottom:14px; }
+    .choices { display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:14px; }
+    button { border:none; border-radius:18px; padding:16px; font-size:18px; font-weight:800; cursor:pointer; }
+    .choice { background:#fff; color:#0f172a; border:1px solid #cbd5e1; text-align:left; }
+    .choice.correct { background:#dcfce7; border-color:#16a34a; }
+    .choice.wrong { background:#fee2e2; border-color:#dc2626; }
+    .answer-box { display:none; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:18px; padding:16px; margin-bottom:14px; }
+    .answer-text { font-size:clamp(22px,6vw,30px); font-weight:800; }
+    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .easy { background:#fff; color:#0f172a; border:1px solid #cbd5e1; }
+    .hard { background:#0f172a; color:#fff; }
+    .reset { display:block; margin:16px auto 0; background:transparent; color:#334155; }
+    .finish { text-align:center; display:none; }
+    @media (min-width:700px) { .stats { grid-template-columns:repeat(5,1fr); } .choices { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>単語4択テスト</h1>
+      <p class="subtitle">英語に合う日本語を4択から選びます。</p>
+    </header>
+
+    <section id="drillArea">
+      <div class="stats">
+        <div class="stat-card"><div class="stat-label">セット内クリア</div><div class="stat-value" id="masteredCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">復習中</div><div class="stat-value" id="reviewCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">セット内残り</div><div class="stat-value" id="remainingCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">セット</div><div class="stat-value" id="setCount">1/1</div></div>
+        <div class="stat-card"><div class="stat-label">全問題</div><div class="stat-value" id="totalCount">0</div></div>
+      </div>
+
+      <main class="card">
+        <div id="questionId">問題</div>
+        <p>次の英語の意味を選びなさい。</p>
+        <div class="question-box" id="questionText"></div>
+        <div class="choices" id="choices"></div>
+
+        <div class="answer-box" id="answerBox">
+          <div id="resultLabel">答え</div>
+          <div class="answer-text" id="answerText"></div>
+          <div id="explanationText"></div>
+        </div>
+
+        <div class="button-grid">
+          <button class="easy" id="easyButton" disabled>簡単</button>
+          <button class="hard" id="hardButton" disabled>難しい</button>
+        </div>
+      </main>
+    </section>
+
+    <section class="card finish" id="finishArea">
+      <h2>全問終了！</h2>
+      <p>すべてのセットをクリアしました。</p>
+      <button class="hard" id="restartButton">もう一度練習する</button>
+    </section>
+
+    <button class="reset" id="resetButton">最初からやり直す</button>
+  </div>
+
+  <script>
+    const QUESTIONS_PER_SET = 20;
+
+    const questions = [
+      { id:"1", question:"counselor", answer:"カウンセラー、相談員", explanation:"person who gives advice or help", options:["カウンセラー、相談員","〜し始める","…するように、…するために","達成する"] },
+      { id:"2", question:"ask for", answer:"〜を求める、〜をお願いする", explanation:"request something", options:["確かに〜だが、…","〜を求める、〜をお願いする","決定、決心","〜でさえ、〜すら"] },
+      { id:"3", question:"separately", answer:"別々に、個別に", explanation:"not together", options:["〜のおかげで","別々に、個別に","外で、外側に","〜もまた"] },
+      { id:"4", question:"ask O to do", answer:"Oに〜するように頼む", explanation:"request someone to do something", options:["必要以上に","Oに〜するように頼む","〜したいです","なんとか〜する"] },
+      { id:"5", question:"session", answer:"集まり、授業、面談", explanation:"a period of meeting or study", options:["〜し続ける","集まり、授業、面談","〜かどうか","徐々に、だんだん"] },
+      { id:"6", question:"so that …", answer:"…するように、…するために", explanation:"shows purpose or result", options:["…するように、…するために","ますます、どんどん","達成する","〜し始める"] },
+      { id:"7", question:"It’s true that ~, but …", answer:"確かに〜だが、…", explanation:"admit one point before giving another idea", options:["〜から距離がある、疎遠である","〜でさえ、〜すら","確かに〜だが、…","決定、決心"] },
+      { id:"8", question:"~ as well", answer:"〜もまた", explanation:"too / also", options:["外で、外側に","〜もまた","〜のおかげで","関係、人間関係"] },
+      { id:"9", question:"more than necessary", answer:"必要以上に", explanation:"more than needed", options:["〜したいです","なんとか〜する","必要以上に","カウンセラー、相談員"] },
+      { id:"10", question:"gradually", answer:"徐々に、だんだん", explanation:"little by little", options:["徐々に、だんだん","〜かどうか","〜を求める、〜をお願いする","〜し続ける"] },
+      { id:"11", question:"start doing", answer:"〜し始める", explanation:"begin doing something", options:["別々に、個別に","〜し始める","達成する","ますます、どんどん"] },
+      { id:"12", question:"even", answer:"〜でさえ、〜すら", explanation:"used to emphasize something surprising", options:["決定、決心","〜から距離がある、疎遠である","〜でさえ、〜すら","Oに〜するように頼む"] },
+      { id:"13", question:"outside", answer:"外で、外側に", explanation:"not inside", options:["関係、人間関係","外で、外側に","集まり、授業、面談","〜のおかげで"] },
+      { id:"14", question:"I’d [=I would] like to do", answer:"〜したいです", explanation:"a polite way to say want to do", options:["…するように、…するために","なんとか〜する","〜したいです","カウンセラー、相談員"] },
+      { id:"15", question:"whether", answer:"〜かどうか", explanation:"if; used when there are two possibilities", options:["〜を求める、〜をお願いする","確かに〜だが、…","〜し続ける","〜かどうか"] },
+      { id:"16", question:"achieve", answer:"達成する", explanation:"succeed in doing or reaching something", options:["別々に、個別に","達成する","ますます、どんどん","〜もまた"] },
+      { id:"17", question:"decision", answer:"決定、決心", explanation:"a choice or judgment", options:["〜から距離がある、疎遠である","決定、決心","必要以上に","Oに〜するように頼む"] },
+      { id:"18", question:"thanks to", answer:"〜のおかげで", explanation:"because of something good", options:["関係、人間関係","〜のおかげで","集まり、授業、面談","徐々に、だんだん"] },
+      { id:"19", question:"manage to do", answer:"なんとか〜する", explanation:"succeed in doing something difficult", options:["…するように、…するために","カウンセラー、相談員","〜し始める","なんとか〜する"] },
+      { id:"20", question:"keep doing", answer:"〜し続ける", explanation:"continue doing something", options:["〜を求める、〜をお願いする","〜し続ける","確かに〜だが、…","〜でさえ、〜すら"] },
+      { id:"21", question:"more and more", answer:"ますます、どんどん", explanation:"increasingly", options:["〜もまた","ますます、どんどん","外で、外側に","別々に、個別に"] },
+      { id:"22", question:"distant from", answer:"〜から距離がある、疎遠である", explanation:"not close to someone/something", options:["Oに〜するように頼む","〜したいです","〜から距離がある、疎遠である","必要以上に"] },
+      { id:"23", question:"relationship", answer:"関係、人間関係", explanation:"connection between people or things", options:["集まり、授業、面談","徐々に、だんだん","関係、人間関係","〜かどうか"] }
+    ];
+
+    let questionSets = [];
+    let currentSetIndex = 0;
+    let currentQuestion = null;
+    let waitingQuestions = [];
+    let masteredIds = [];
+    let reviewIds = [];
+    let answered = false;
+    let selectedOption = null;
+
+    const drillArea = document.getElementById("drillArea");
+    const finishArea = document.getElementById("finishArea");
+    const masteredCount = document.getElementById("masteredCount");
+    const reviewCount = document.getElementById("reviewCount");
+    const remainingCount = document.getElementById("remainingCount");
+    const setCount = document.getElementById("setCount");
+    const totalCount = document.getElementById("totalCount");
+    const questionId = document.getElementById("questionId");
+    const questionText = document.getElementById("questionText");
+    const choices = document.getElementById("choices");
+    const answerBox = document.getElementById("answerBox");
+    const resultLabel = document.getElementById("resultLabel");
+    const answerText = document.getElementById("answerText");
+    const explanationText = document.getElementById("explanationText");
+    const easyButton = document.getElementById("easyButton");
+    const hardButton = document.getElementById("hardButton");
+    const resetButton = document.getElementById("resetButton");
+    const restartButton = document.getElementById("restartButton");
+
+    function shuffleArray(array) {
+      const copied = array.slice();
+      for (let i = copied.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copied[i], copied[j]] = [copied[j], copied[i]];
+      }
+      return copied;
+    }
+
+    function chunkQuestions(list, size) {
+      const chunks = [];
+      for (let i = 0; i < list.length; i += size) {
+        chunks.push(list.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function startSet(index) {
+      currentSetIndex = index;
+      const selectedSet = shuffleArray(questionSets[currentSetIndex] || []);
+      currentQuestion = selectedSet[0] || null;
+      waitingQuestions = selectedSet.slice(1);
+      masteredIds = [];
+      reviewIds = [];
+      answered = false;
+      selectedOption = null;
+      render();
+    }
+
+    function showFinish() {
+      drillArea.style.display = "none";
+      finishArea.style.display = "block";
+      resetButton.style.display = "none";
+    }
+
+    function goToNextQuestion(nextWaitingQuestions) {
+      if (nextWaitingQuestions.length === 0) {
+        const nextSetIndex = currentSetIndex + 1;
+        if (nextSetIndex >= questionSets.length) {
+          currentQuestion = null;
+          showFinish();
+          return;
+        }
+        startSet(nextSetIndex);
+        return;
+      }
+
+      currentQuestion = nextWaitingQuestions[0];
+      waitingQuestions = nextWaitingQuestions.slice(1);
+      answered = false;
+      selectedOption = null;
+      render();
+    }
+
+    function chooseOption(option) {
+      if (answered) return;
+      answered = true;
+      selectedOption = option;
+      render();
+    }
+
+    function markEasy() {
+      if (!currentQuestion || !answered) return;
+      if (!masteredIds.includes(currentQuestion.id)) {
+        masteredIds.push(currentQuestion.id);
+      }
+      reviewIds = reviewIds.filter(id => id !== currentQuestion.id);
+      goToNextQuestion(waitingQuestions);
+    }
+
+    function markHard() {
+      if (!currentQuestion || !answered) return;
+      if (!reviewIds.includes(currentQuestion.id)) {
+        reviewIds.push(currentQuestion.id);
+      }
+      const nextWaitingQuestions = waitingQuestions.slice();
+      const insertPosition = Math.min(3, nextWaitingQuestions.length);
+      nextWaitingQuestions.splice(insertPosition, 0, currentQuestion);
+      goToNextQuestion(nextWaitingQuestions);
+    }
+
+    function resetApp() {
+      drillArea.style.display = "block";
+      finishArea.style.display = "none";
+      resetButton.style.display = "block";
+      questionSets = chunkQuestions(questions, QUESTIONS_PER_SET);
+      startSet(0);
+    }
+
+    function render() {
+      if (!currentQuestion) return;
+
+      masteredCount.textContent = masteredIds.length;
+      reviewCount.textContent = reviewIds.length;
+      remainingCount.textContent = waitingQuestions.length + 1;
+      setCount.textContent = (currentSetIndex + 1) + "/" + questionSets.length;
+      totalCount.textContent = questions.length;
+
+      questionId.textContent = "問題 " + currentQuestion.id;
+      questionText.textContent = currentQuestion.question;
+
+      choices.innerHTML = "";
+      currentQuestion.options.forEach(function(option, index) {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.textContent = String.fromCharCode(65 + index) + ". " + option;
+        btn.disabled = answered;
+
+        if (answered && option === currentQuestion.answer) btn.classList.add("correct");
+        if (answered && option === selectedOption && option !== currentQuestion.answer) btn.classList.add("wrong");
+
+        btn.addEventListener("click", function() {
+          chooseOption(option);
+        });
+
+        choices.appendChild(btn);
+      });
+
+      if (answered) {
+        const isCorrect = selectedOption === currentQuestion.answer;
+        answerBox.style.display = "block";
+        resultLabel.textContent = isCorrect ? "正解！" : "不正解";
+        answerText.textContent = currentQuestion.answer;
+        explanationText.textContent = currentQuestion.explanation;
+        easyButton.disabled = false;
+        hardButton.disabled = false;
+      } else {
+        answerBox.style.display = "none";
+        easyButton.disabled = true;
+        hardButton.disabled = true;
+      }
+    }
+
+    easyButton.addEventListener("click", markEasy);
+    hardButton.addEventListener("click", markHard);
+    resetButton.addEventListener("click", resetApp);
+    restartButton.addEventListener("click", resetApp);
+
+    resetApp();
+  </script>
+</body>
+</html>
